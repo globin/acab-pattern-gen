@@ -49,6 +49,25 @@ impl Generate for HorizWave {
     }
 }
 
+struct HorizDblWave;
+impl Generate for HorizDblWave {
+    fn generate(&self, w: u8, _h: u8, n: u8, x: u8, _y: u8) -> Rgb {
+        let value = match x == n || w - x == n + 1 {
+            true => 255,
+            false => 0,
+        };
+        Rgb(value, value, value)
+    }
+
+    fn name(&self) -> &str {
+        "horiz_dbl_wave"
+    }
+
+    fn steps(&self, w: u8, _h: u8) -> u8 {
+        w
+    }
+}
+
 struct VertWave;
 impl Generate for VertWave {
     fn generate(&self, _w: u8, _h: u8, n: u8, _x: u8, y: u8) -> Rgb {
@@ -68,14 +87,69 @@ impl Generate for VertWave {
     }
 }
 
+struct VertDblWave;
+impl Generate for VertDblWave {
+    fn generate(&self, _w: u8, h: u8, n: u8, _x: u8, y: u8) -> Rgb {
+        let value = match y == n || h - y == n + 1 {
+            true => 255,
+            false => 0,
+        };
+        Rgb(value, value, value)
+    }
+
+    fn name(&self) -> &str {
+        "vert_dbl_wave"
+    }
+
+    fn steps(&self, _w: u8, h: u8) -> u8 {
+        h
+    }
+}
+
+
+const ANIM2015: [[u8; 9]; 9] = [
+    [0, 1, 1, 0, 0, 1, 1, 1, 0],
+    [0, 0, 0, 1, 0, 1, 0, 1, 0],
+    [0, 0, 1, 0, 0, 1, 0, 1, 0],
+    [0, 1, 1, 1, 0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 0, 0, 1, 1, 1, 0],
+    [0, 0, 1, 0, 0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 1, 0],
+    [0, 0, 1, 0, 0, 1, 1, 1, 0],
+];
+struct Anim2015;
+impl Generate for Anim2015 {
+    fn generate(&self, w: u8, h: u8, n: u8, x: u8, y: u8) -> Rgb {
+        let half_steps = self.steps(w, h) / 2;
+        let value = match ANIM2015[y as usize][x as usize] == 1 {
+            true => (255f64 * ((-(n as i8 - half_steps as i8).abs() + half_steps as i8) as f64 / half_steps as f64)) as u8,
+            false => 0,
+        };
+        Rgb(value, value, value)
+    }
+
+    fn name(&self) -> &str {
+        "2015"
+    }
+
+    fn steps(&self, _w: u8, _h: u8) -> u8 {
+        16
+    }
+}
+
+
 fn main() {
     let w = 9;
     let h = 9;
     let generators: Vec<Box<Generate>> = vec![
         Box::new(HorizWave),
+        Box::new(HorizDblWave),
         Box::new(VertWave),
+        Box::new(VertDblWave),
+        Box::new(Anim2015),
     ];
-    let outputters: Vec<Box<Output>> = vec![Box::new(Printer), Box::new(ImageOutput)];
+    let outputters: Vec<Box<Output>> = vec![Box::new(ImageOutput)];
 
     let animations = generators.iter().map(|generator| {
         Animation::new((0..generator.steps(w, h)).map(|n| iproduct!(0..w, 0..h).map(
