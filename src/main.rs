@@ -49,10 +49,32 @@ impl Generate for HorizWave {
     }
 }
 
+struct VertWave;
+impl Generate for VertWave {
+    fn generate(&self, _w: u8, _h: u8, n: u8, _x: u8, y: u8) -> Rgb {
+        let value = match y == n {
+            true => 255,
+            false => 0,
+        };
+        Rgb(value, value, value)
+    }
+
+    fn name(&self) -> &str {
+        "vert_wave"
+    }
+
+    fn steps(&self, _w: u8, h: u8) -> u8 {
+        h
+    }
+}
+
 fn main() {
     let w = 9;
     let h = 9;
-    let generators: Vec<Box<Generate>> = vec![Box::new(HorizWave)];
+    let generators: Vec<Box<Generate>> = vec![
+        Box::new(HorizWave),
+        Box::new(VertWave),
+    ];
     let outputters: Vec<Box<Output>> = vec![Box::new(Printer), Box::new(ImageOutput)];
 
     let animations = generators.iter().map(|generator| {

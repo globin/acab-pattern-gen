@@ -21,7 +21,9 @@ pub struct ImageOutput;
 impl Output for ImageOutput {
     fn output(&self, animations: &Vec<Animation>, w: u8, h: u8) {
         animations.iter().foreach(|anim| {
-            fs::remove_dir_all(&anim.name).unwrap();
+            if fs::metadata(&anim.name).is_ok() {
+                fs::remove_dir_all(&anim.name).unwrap();
+            }
             fs::create_dir(&anim.name).unwrap();
 
             anim.images.iter().enumerate().foreach(|(i, image)| {
