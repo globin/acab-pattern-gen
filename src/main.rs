@@ -1,9 +1,11 @@
 extern crate image;
 #[macro_use] extern crate itertools;
 
+use std::fs::{self, File};
+use std::io::Write;
+
+use image::{ImageBuffer, ImageRgb8};
 use itertools::Itertools;
-use std::fs::File;
-use image::{ImageBuffer, Luma};
 
 #[derive(Debug)]
 struct Rgb(u8, u8, u8);
@@ -18,7 +20,7 @@ trait Generate {
 
 struct HorizWave;
 impl Generate for HorizWave {
-    fn generate(&self, w: u8, h: u8, n: u8, x: u8, y: u8) -> Rgb {
+    fn generate(&self, _w: u8, _h: u8, n: u8, x: u8, _y: u8) -> Rgb {
         let value = match x == n {
             true => 255,
             false => 0,
@@ -30,7 +32,7 @@ impl Generate for HorizWave {
         "horiz_wave"
     }
 
-    fn steps(&self, w: u8, h: u8) -> u8 {
+    fn steps(&self, w: u8, _h: u8) -> u8 {
         w
     }
 }
@@ -41,7 +43,7 @@ trait Output {
 
 struct Printer;
 impl Output for Printer {
-    fn output(&self, animations: &Vec<Animation>, w: u8, h: u8) {
+    fn output(&self, animations: &Vec<Animation>, _w: u8, _h: u8) {
         println!("{:?}", animations);
     }
 }
@@ -49,6 +51,9 @@ struct ImageOutput;
 impl Output for ImageOutput {
     fn output(&self, animations: &Vec<Animation>, w: u8, h: u8) {
         animations.iter().foreach(|anim| {
+            fs::remove_dir_all(&anim.name).unwrap();
+            fs::create_dir(&anim.name).unwrap();
+
             anim.images.iter().enumerate().foreach(|(i, image)| {
                 let mut imgbuf = ImageBuffer::new(w as u32, h as u32);
 
@@ -57,9 +62,16 @@ impl Output for ImageOutput {
                     *pixel = image::Rgb([r, g, b]);
                 }
 
-                let ref mut fout = File::create(format!("{}_{}.png", anim.name, i)).unwrap();
-                image::ImageRgb8(imgbuf).save(fout, image::PNG).unwrap();
-            })
+                let ref mut fout = File::create(format!("{}/{}.png", anim.name, i)).unwrap();
+                ImageRgb8(imgbuf).save(fout, image::PNG).unwrap();
+            });
+
+            let ref mut list_file = File::create(format!("{}/list", anim.name)).unwrap();
+            write!(
+                list_file,
+                "{}\n",
+                (0..anim.images.len()).map(|n| format!("{}.png", n)).join("\n")
+            ).unwrap();
         })
     }
 }
