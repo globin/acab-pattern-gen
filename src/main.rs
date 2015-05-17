@@ -32,8 +32,9 @@ trait Generate {
 
 struct HorizWave;
 impl Generate for HorizWave {
-    fn generate(&self, _w: u8, _h: u8, n: u8, x: u8, _y: u8) -> Rgb {
-        let value = match x == n {
+    fn generate(&self, w: u8, h: u8, n: u8, x: u8, _y: u8) -> Rgb {
+        let half_steps = (self.steps(w, h) / 2) as i8;
+        let value = match -(n as i8 - half_steps).abs() + half_steps as i8 == x as i8 {
             true => 255,
             false => 0,
         };
@@ -45,7 +46,7 @@ impl Generate for HorizWave {
     }
 
     fn steps(&self, w: u8, _h: u8) -> u8 {
-        w
+        (w-1) * 2
     }
 }
 
@@ -64,14 +65,15 @@ impl Generate for HorizDblWave {
     }
 
     fn steps(&self, w: u8, _h: u8) -> u8 {
-        w
+        w - 1
     }
 }
 
 struct VertWave;
 impl Generate for VertWave {
-    fn generate(&self, _w: u8, _h: u8, n: u8, _x: u8, y: u8) -> Rgb {
-        let value = match y == n {
+    fn generate(&self, w: u8, h: u8, n: u8, _x: u8, y: u8) -> Rgb {
+        let half_steps = (self.steps(w, h) / 2) as i8;
+        let value = match -(n as i8 - half_steps).abs() + half_steps as i8 == y as i8 {
             true => 255,
             false => 0,
         };
@@ -83,7 +85,7 @@ impl Generate for VertWave {
     }
 
     fn steps(&self, _w: u8, h: u8) -> u8 {
-        h
+        (h-1) * 2
     }
 }
 
@@ -102,7 +104,7 @@ impl Generate for VertDblWave {
     }
 
     fn steps(&self, _w: u8, h: u8) -> u8 {
-        h
+        h - 1
     }
 }
 
@@ -121,9 +123,9 @@ const ANIM2015: [[u8; 9]; 9] = [
 struct Anim2015;
 impl Generate for Anim2015 {
     fn generate(&self, w: u8, h: u8, n: u8, x: u8, y: u8) -> Rgb {
-        let half_steps = self.steps(w, h) / 2;
+        let half_steps = (self.steps(w, h) / 2) as i8;
         let value = match ANIM2015[y as usize][x as usize] == 1 {
-            true => (255f64 * ((-(n as i8 - half_steps as i8).abs() + half_steps as i8) as f64 / half_steps as f64)) as u8,
+            true => (255f64 * ((-(n as i8 - half_steps).abs() + half_steps) as f64 / half_steps as f64)) as u8,
             false => 0,
         };
         Rgb(value, value, value)
